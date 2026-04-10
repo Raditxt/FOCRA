@@ -47,7 +47,7 @@ Hasilnya lebih objektif dibanding rating manual karena berbasis perilaku nyata.
 
 ```bash
 # Clone & masuk folder
-git clone https://github.com/Raditxt/FOCRA.git
+git clone https://github.com/username/focra.git
 cd focra
 
 # Virtual environment
@@ -79,3 +79,59 @@ Buka `http://localhost:8501`.
 Free tier: 15 request per menit, 1.500 request per hari — cukup untuk penggunaan personal.
 
 ## Struktur Project
+
+```
+focra/
+├── main.py                          # Entry point (onboarding, sesi, timer, alarm)
+├── requirements.txt
+├── .env.example
+├── app/
+│   ├── pages/
+│   │   └── dashboard.py             # Insight statistik + AI coaching
+│   └── components/
+│       └── distraction_logger.py    # Form log distraksi
+├── core/
+│   ├── session.py                   # CRUD SQLite + kalkulasi focus score
+│   └── analyzer.py                  # Agregasi data untuk dashboard & prompt
+├── ai/
+│   ├── prompts.py                   # System prompt + template
+│   └── coach.py                     # Gemini API wrapper
+├── data/
+│   └── focra.db                     # SQLite (auto-generated, tidak di-commit)
+└── config/
+    └── settings.py                  # API key, model, path DB
+```
+
+## Alur Penggunaan
+
+1. Masukkan nama → user dibuat di database
+2. Pilih topik & target durasi → mulai sesi
+3. Timer berjalan — catat distraksi yang muncul
+4. Saat waktu habis, alarm berbunyi otomatis
+5. Klik **Selesai** → durasi dihitung otomatis, focus score langsung muncul
+6. Buka Dashboard → lihat statistik & minta analisis AI Coach
+
+## Roadmap
+
+- [x] Setup project & struktur folder
+- [x] Database SQLite (users, sessions, distractions)
+- [x] Timer live countdown
+- [x] Alarm audio saat sesi selesai
+- [x] Pencatatan distraksi per sesi
+- [x] Focus score otomatis berbasis perilaku
+- [x] Dashboard dengan Plotly
+- [x] Integrasi Gemini API
+- [x] Prompt engineering coaching personal
+- [ ] Deploy ke Streamlit Cloud
+- [ ] Ekspor data ke CSV
+- [ ] Riwayat sesi per topik
+- [ ] Trend focus score mingguan
+
+## Lisensi
+
+MIT — bebas digunakan, dimodifikasi, dan didistribusikan.
+
+---
+
+Dibuat untuk mahasiswa dan self-learner yang ingin belajar lebih dalam, bukan lebih lama.
+```
