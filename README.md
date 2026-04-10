@@ -47,7 +47,7 @@ Hasilnya lebih objektif dibanding rating manual karena berbasis perilaku nyata.
 
 ```bash
 # Clone & masuk folder
-git clone https://github.com/username/focra.git
+git clone https://github.com/Raditxt/FOCRA.git
 cd focra
 
 # Virtual environment
