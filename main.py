@@ -2,8 +2,9 @@ import streamlit as st
 import streamlit.components.v1 as components
 import sqlite3
 import time
-from datetime import datetime, timedelta
-from core.session import init_db, create_user, start_session, end_session
+from datetime import datetime, timedelta, timezone
+from core.session import (init_db, create_user, start_session, end_session,
+                          log_daily_context)
 from app.components.distraction_logger import render_distraction_logger
 from app.pages.dashboard import render_dashboard
 from config.settings import APP_NAME, DB_PATH
@@ -23,6 +24,7 @@ for key, default in [
     if key not in st.session_state:
         st.session_state[key] = default
 
+# Onboarding
 if not st.session_state.user_id:
     st.title(f"Selamat datang di {APP_NAME}")
     st.caption("Asisten AI untuk membantu kamu belajar lebih fokus.")
@@ -41,8 +43,25 @@ with tab1:
         st.subheader("Mulai sesi baru")
         topic = st.text_input("Topik yang akan dipelajari")
         duration = st.slider("Target durasi (menit)", 15, 120, 45, step=15)
+
+        st.markdown("#### Kondisi sebelum mulai")
+        energy = st.select_slider(
+            "Level energi sekarang",
+            options=[1, 2, 3, 4, 5],
+            value=3,
+            format_func=lambda x: {
+                1: "😴 Sangat lelah", 2: "😕 Lelah", 3: "😐 Biasa",
+                4: "😊 Segar", 5: "⚡ Sangat segar"
+            }[x]
+        )
+        environment = st.selectbox(
+            "Lokasi belajar",
+            ["Kamar", "Kafe", "Perpustakaan", "Ruang kelas", "Lainnya"]
+        )
+
         if st.button("Mulai sesi", type="primary") and topic.strip():
             sid = start_session(st.session_state.user_id, topic.strip(), duration)
+            log_daily_context(st.session_state.user_id, sid, energy, environment)
             st.session_state.active_session_id = sid
             st.session_state.session_start_time = datetime.now()
             st.session_state.target_duration = duration
@@ -50,6 +69,7 @@ with tab1:
             st.rerun()
 
     else:
+        # Recover dari refresh
         if st.session_state.session_start_time is None:
             conn = sqlite3.connect(DB_PATH)
             c = conn.cursor()
@@ -68,7 +88,7 @@ with tab1:
         target_minutes = st.session_state.target_duration
         end_time = start_time + timedelta(minutes=target_minutes)
         remaining = end_time - datetime.now()
-        elapsed_minutes = int((datetime.now() - start_time).total_seconds() / 60)
+        elapsed_minutes = max(int((datetime.now() - start_time).total_seconds() / 60), 1)
 
         timer_placeholder = st.empty()
 
@@ -99,25 +119,21 @@ with tab1:
                             setTimeout(() => {
                                 const o = ctx.createOscillator();
                                 const g = ctx.createGain();
-                                o.connect(g);
-                                g.connect(ctx.destination);
-                                o.frequency.value = freq;
-                                o.type = 'sine';
+                                o.connect(g); g.connect(ctx.destination);
+                                o.frequency.value = freq; o.type = 'sine';
                                 g.gain.setValueAtTime(0.4, ctx.currentTime);
                                 g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
-                                o.start(ctx.currentTime);
-                                o.stop(ctx.currentTime + duration);
+                                o.start(ctx.currentTime); o.stop(ctx.currentTime + duration);
                             }, delay);
                         }
-                        beep(523, 0.2, 0);
-                        beep(659, 0.2, 200);
-                        beep(784, 0.4, 400);
+                        beep(523, 0.2, 0); beep(659, 0.2, 200); beep(784, 0.4, 400);
                     } catch(e) {}
                 </script>
                 """, height=0)
                 st.session_state.alarm_played = True
 
-        render_distraction_logger(st.session_state.active_session_id)
+        render_distraction_logger(st.session_state.active_session_id, start_time)
+
         st.divider()
         st.markdown("#### Akhiri sesi")
         notes = st.text_area("Catatan (opsional)")
@@ -125,8 +141,7 @@ with tab1:
         if st.button("Selesai", type="primary", use_container_width=True):
             focus_score = end_session(
                 st.session_state.active_session_id,
-                actual_duration=max(elapsed_minutes, 1),
-                target_duration=target_minutes,
+                actual_duration=elapsed_minutes,
                 notes=notes
             )
             st.session_state.active_session_id = None

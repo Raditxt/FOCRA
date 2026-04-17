@@ -1,4 +1,5 @@
 import streamlit as st
+from datetime import datetime
 from core.session import log_distraction
 
 DISTRACTION_TYPES = [
@@ -11,22 +12,13 @@ DISTRACTION_TYPES = [
     "Lainnya",
 ]
 
-def render_distraction_logger(session_id: int):
+def render_distraction_logger(session_id: int, session_start_time: datetime):
     st.markdown("#### Catat distraksi")
-    
-    with st.form(key=f"distraction_form_{session_id}", clear_on_submit=True):
-        col1, col2 = st.columns([2, 1])
-        with col1:
-            dtype = st.selectbox(
-                "Jenis distraksi", 
-                DISTRACTION_TYPES, 
-                key=f"dtype_{session_id}"
-            )
-        with col2:
-            st.write("##") 
-            # Ganti use_container_width dengan width
-            submit = st.form_submit_button("Catat", width='stretch')
-            
-        if submit:
-            log_distraction(session_id, dtype)
-            st.toast(f"✅ Dicatat: {dtype}")
+    col1, col2 = st.columns([2, 1])
+    with col1:
+        dtype = st.selectbox("Jenis distraksi", DISTRACTION_TYPES, key="dtype")
+    with col2:
+        if st.button("Catat", use_container_width=True):
+            elapsed = int((datetime.now() - session_start_time).total_seconds() / 60)
+            log_distraction(session_id, dtype, elapsed_minutes=elapsed)
+            st.toast(f"Dicatat di menit ke-{elapsed}: {dtype}")

@@ -19,6 +19,9 @@ def render_dashboard(user_id: int, user_name: str):
     col2.metric("Total distraksi", summary["total"])
     col3.metric("Avg focus score", f"{summary.get('avg_focus_score', 0):.1f}/10")
 
+    if summary.get("peak_distraction_minute") is not None:
+        st.info(f"Fokusmu paling sering terganggu sekitar menit ke-{summary['peak_distraction_minute']} — coba jadikan ini sebagai tanda untuk istirahat sebentar.")
+
     if summary.get("by_type"):
         fig = px.bar(
             x=list(summary["by_type"].keys()),

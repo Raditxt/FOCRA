@@ -1,16 +1,16 @@
-from google import genai
+import ollama
 from ai.prompts import SYSTEM_PROMPT, build_analysis_prompt
-from config.settings import GEMINI_API_KEY, MODEL_NAME, MAX_TOKENS
+from config.settings import OLLAMA_MODEL, OLLAMA_HOST
 
 
 def get_coaching_insight(context: str, user_name: str) -> str:
-    client = genai.Client(api_key=GEMINI_API_KEY)
-
+    client = ollama.Client(host=OLLAMA_HOST)
     prompt = build_analysis_prompt(context, user_name)
-    full_prompt = f"{SYSTEM_PROMPT}\n\n{prompt}"
-
-    response = client.models.generate_content(
-        model=MODEL_NAME,
-        contents=full_prompt,
+    response = client.chat(
+        model=OLLAMA_MODEL,
+        messages=[
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": prompt}
+        ]
     )
-    return response.text
+    return response.message.content
